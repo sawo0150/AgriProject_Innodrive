@@ -1,0 +1,8 @@
+# Goal (사용자가 찍은 2D 웨이포인트들)
+geometry_msgs/Pose2D[] waypoints
+---
+# Result (최종 성공 여부 등)
+bool success
+---
+# Feedback (지금 몇 번째 웨이포인트를 지나는 중인지)
+uint32 current_waypoint
