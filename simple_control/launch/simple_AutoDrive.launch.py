@@ -5,10 +5,10 @@ from launch.actions import ExecuteProcess
 
 def generate_launch_description():
     return LaunchDescription([
-        # Launch the keyboard_controller.py node
+        # Launch the localization_converter.py node
         ExecuteProcess(
             cmd=[
-                'ros2', 'run', 'simple_control', 'keyboard_controller'
+                'ros2', 'run', 'simple_control', 'localization_converter'
             ],
             output='screen'
         ),
@@ -16,7 +16,7 @@ def generate_launch_description():
         # Launch the rtabmap.launch.py file with arguments
         ExecuteProcess(
             cmd=[
-                'ros2', 'launch', 'rtabmap_launch', 'rtabmap.launch.py',
+                'ros2', 'launch', 'simple_control', 'my_rtabmap_params.launch.py',
                 'localization:=true',
                 'subscribe_rgbd:=true',
                 'rgbd_sync:=true',
@@ -28,6 +28,9 @@ def generate_launch_description():
                 'approx_sync:=true',
                 'wait_imu_to_init:=false',
                 'qos:=1',
+                'Rtabmap_DetectionRate:=3.0',
+                'RGBD_MaxLoopClosureDistance:=2.0',
+                'RGBD_ProximityMaxGraphDepth:=5'
                 # 'rviz:=true'
             ],
             output='screen'

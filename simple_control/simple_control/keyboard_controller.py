@@ -5,6 +5,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 import pygame
 
+linear_vel = 1.0
+angular_vel = 1.0
 class KeyboardTeleop(Node):
     def __init__(self):
         super().__init__('keyboard_teleop')
@@ -29,13 +31,13 @@ class KeyboardTeleop(Node):
 
         # Map keys to velocities
         if keys[pygame.K_w]:
-            self.linear_velocity = 1.0
+            self.linear_velocity = linear_vel
         if keys[pygame.K_s]:
-            self.linear_velocity = -1.0
+            self.linear_velocity = -linear_vel
         if keys[pygame.K_a]:
-            self.angular_velocity = 1.0
+            self.angular_velocity = angular_vel
         if keys[pygame.K_d]:
-            self.angular_velocity = -1.0
+            self.angular_velocity = -angular_vel
 
     def publish_velocity(self):
         # Update key states

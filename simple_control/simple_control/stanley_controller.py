@@ -20,8 +20,8 @@ import pathlib
 
 k = 0.5  # control gain
 Kp = 1.0  # speed proportional gain
-dt = 0.1  # [s] time difference
-L = 2.9  # [m] Wheel base of vehicle
+dt = 0.01  # [s] time difference
+L = 0.0595+0.05125  # [m] Wheel base of vehicle
 max_steer = np.radians(30.0)  # [rad] max steering angle
 
 show_animation = True
@@ -56,10 +56,10 @@ class State:
         """
         delta = np.clip(delta, -max_steer, max_steer)
 
-        self.x += self.v * np.cos(self.yaw) * dt
-        self.y += self.v * np.sin(self.yaw) * dt
-        self.yaw += self.v / L * np.tan(delta) * dt
-        self.yaw = normalize_angle(self.yaw)
+        # self.x += self.v * np.cos(self.yaw) * dt
+        # self.y += self.v * np.sin(self.yaw) * dt
+        # self.yaw += self.v / L * np.tan(delta) * dt
+        # self.yaw = normalize_angle(self.yaw)
         self.v += acceleration * dt
 
 def angle_mod(x, zero_2_2pi=False, degree=False):
@@ -145,7 +145,7 @@ def stanley_control(state, cx, cy, cyaw, last_target_idx):
     """
     current_target_idx, error_front_axle = calc_target_index(state, cx, cy)
 
-    if last_target_idx >= current_target_idx:
+    if last_target_idx <= current_target_idx:
         current_target_idx = last_target_idx
 
     # theta_e corrects the heading error
@@ -155,7 +155,7 @@ def stanley_control(state, cx, cy, cyaw, last_target_idx):
     # Steering control
     delta = theta_e + theta_d
 
-    return delta, current_target_idx
+    return delta, current_target_idx+1
 
 
 def normalize_angle(angle):
@@ -177,9 +177,11 @@ def calc_target_index(state, cx, cy):
     :param cy: [float]
     :return: (int, float)
     """
-    # Calc front axle position
-    fx = state.x + L * np.cos(state.yaw)
-    fy = state.y + L * np.sin(state.yaw)
+    # # Calc front axle position
+    # fx = state.x + L * np.cos(state.yaw)
+    # fy = state.y + L * np.sin(state.yaw)
+    fx = state.x
+    fy = state.y
 
     # Search nearest point index
     dx = [fx - icx for icx in cx]
@@ -192,6 +194,8 @@ def calc_target_index(state, cx, cy):
                       -np.sin(state.yaw + np.pi / 2)]
     error_front_axle = np.dot([dx[target_idx], dy[target_idx]], front_axle_vec)
 
+    # print(d)
+    # print(target_idx)
     return target_idx, error_front_axle
 
 

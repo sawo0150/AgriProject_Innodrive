@@ -31,6 +31,8 @@ setup(
             'keyboard_controller = simple_control.keyboard_controller:main',
             'simple_local_planner = simple_control.simpleLocalPathPlanner:main',
             'localization_converter = simple_control.localization_converter:main',
+            'waypoint_visualizer = simple_control.waypoint_visualizer:main',
+            'cal_DepthPlaneProjectMatrix = simple_control.cal_DepthPlaneProjectMatrix:main',
         ],
     },
 )
