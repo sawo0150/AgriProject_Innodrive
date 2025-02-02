@@ -11,12 +11,6 @@ from torchvision.ops import box_convert
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 from grounding_dino.groundingdino.util.inference import load_model, predict
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-import rclpy
-from rclpy.node import Node
-
-import time
 
 """
 Hyper parameters
@@ -26,7 +20,7 @@ TEXT_PROMPT = "drivable ground."
 
 # Dynamically find paths based on the script's location
 # 스크립트 기준 베이스 경로
-BASE_DIR = Path(__file__).resolve().parents[3] / "Grounded-SAM-2"
+BASE_DIR = Path(__file__).resolve().parents[4] / "Grounded-SAM-2"
 # 경로 설정 (PosixPath -> 문자열 변환)
 # SAM2_CHECKPOINT = str(BASE_DIR / "checkpoints/sam2.1_hiera_large.pt")
 # SAM2_MODEL_CONFIG = "configs/sam2.1/sam2.1_hiera_l.yaml"
@@ -37,24 +31,15 @@ SAM2_MODEL_CONFIG = "configs/sam2.1/sam2.1_hiera_t.yaml"
 GROUNDING_DINO_CONFIG = str(BASE_DIR / "grounding_dino/groundingdino/config/GroundingDINO_SwinT_OGC.py")
 GROUNDING_DINO_CHECKPOINT = str(BASE_DIR / "gdino_checkpoints/groundingdino_swint_ogc.pth")
 
-BOX_THRESHOLD = 0.35
+BOX_THRESHOLD = 0.55
 TEXT_THRESHOLD = 0.25
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 OUTPUT_DIR = Path("outputs/isaac_sim_demo")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Initialize the CV bridge
-bridge = CvBridge()
-
-class GroundedSAM2Node(Node):
+class GroundedSAM2():
     def __init__(self):
-        super().__init__('grounded_sam2_node')
-        self.subscription = self.create_subscription(
-            Image,
-            '/sim_camera/rgb',
-            self.image_callback,
-            2
-        )
+
         self.sam2_predictor = self.build_sam2_predictor()
         self.grounding_model = self.build_grounding_model()
 
@@ -69,10 +54,7 @@ class GroundedSAM2Node(Node):
             device=DEVICE
         )
 
-    def image_callback(self, msg):
-        start = time.time()
-        # Convert ROS2 Image to OpenCV format
-        cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')  # numpy.ndarray
+    def image_callback(self, cv_image):
         h, w, _ = cv_image.shape
 
         # Convert numpy image to PyTorch tensor
@@ -109,6 +91,14 @@ class GroundedSAM2Node(Node):
         if masks.ndim == 4:
             masks = masks.squeeze(1)
 
+        # 선택: 검출된 영역 중 이미지에서 가장 아래쪽(즉, y값이 가장 큰 영역)의 mask 선택
+        if input_boxes.shape[0] > 0:
+            # input_boxes[:, 3]는 각 박스의 y2 (하단) 좌표를 의미합니다.
+            idx = np.argmax(input_boxes[:, 3])
+            ground_mask = masks[idx]
+        else:
+            ground_mask = None
+
         # Generate detections for visualization
         class_ids = np.array(list(range(len(labels))))
         detections = sv.Detections(
@@ -128,26 +118,12 @@ class GroundedSAM2Node(Node):
         mask_annotator = sv.MaskAnnotator()
         annotated_frame = mask_annotator.annotate(scene=annotated_frame, detections=detections)
 
-        # Show the annotated image
-        cv2.imshow('Grounded SAM 2 - Drivable Ground', annotated_frame)
-        cv2.waitKey(1)
+        # 최종적으로 annotated_frame와 가장 아래쪽에 있는 ground_mask만 반환합니다.
+        return annotated_frame, ground_mask
 
-        # Optionally save the result
-        cv2.imwrite(str(OUTPUT_DIR / "last_annotated_frame.jpg"), annotated_frame)
-        end = time.time()
-        print(end-start)
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = GroundedSAM2Node()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
-        cv2.destroyAllWindows()
+    node = GroundedSAM2()
 
 
 if __name__ == '__main__':

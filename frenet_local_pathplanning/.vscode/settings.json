@@ -1,0 +1,26 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/swpants05/Desktop/AgriProject_Innodrive/build/simple_control",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/simple_control/lib/python3.10/site-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/rtabmap_python/lib/python3.10/site-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/rtabmap_msgs/local/lib/python3.10/dist-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/innoagri_msgs/local/lib/python3.10/dist-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/build/frenet_local_pathplanning",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/frenet_local_pathplanning/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/src/Grounded-SAM-2"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/swpants05/Desktop/AgriProject_Innodrive/build/simple_control",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/simple_control/lib/python3.10/site-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/rtabmap_python/lib/python3.10/site-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/rtabmap_msgs/local/lib/python3.10/dist-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/innoagri_msgs/local/lib/python3.10/dist-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/build/frenet_local_pathplanning",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/install/frenet_local_pathplanning/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "/home/swpants05/Desktop/AgriProject_Innodrive/src/Grounded-SAM-2"
+    ]
+}

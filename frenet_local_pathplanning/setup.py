@@ -29,6 +29,7 @@ setup(
         'console_scripts': [
             # 명령어 = 모듈.파이썬파일:진입함수
             'grounded_SAM2_test = frenet_local_pathplanning.grounded_SAM2_test:main',
+            'frenetLocalPathPlanner = frenet_local_pathplanning.frenetLocalPathPlanner:main',
         ],
     },
 )

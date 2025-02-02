@@ -6,9 +6,9 @@
 #custom constant
 
 Rtabmap_DetectionRate = '1.5'
-RGBD_MaxLoopClosureDistance = '0.3'
+RGBD_MaxLoopClosureDistance = '0.10'
 rgbd_proximitymaxgraphdepth = '5'
-ProximityPathFilteringRadius = '0.3'
+ProximityPathFilteringRadius = '0.10'
 
 
 import os
