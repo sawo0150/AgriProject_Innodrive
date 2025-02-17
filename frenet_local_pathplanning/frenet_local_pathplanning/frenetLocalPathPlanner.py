@@ -10,10 +10,10 @@ import cv2
 import concurrent.futures
 
 # 메시지
-from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
+from geometry_msgs.msg import PoseWithCovarianceStamped, Twist, Pose2D, PoseStamped
 from std_msgs.msg import Float64MultiArray
-from geometry_msgs.msg import Pose2D
 from sensor_msgs.msg import Image, CameraInfo
+from nav_msgs.msg import Path
 
 # 우리가 정의한 Action (my_robot_interfaces)
 from innoagri_msgs.action import NavigateWaypoints
@@ -27,13 +27,15 @@ import time
 import frenet_local_pathplanning.include.frenet_optimal_trajectory as fot
 from frenet_local_pathplanning.include.cubic_spline_planner import CubicSpline2D
 from frenet_local_pathplanning.include.cartesian_frenet_converter import CartesianFrenetConverter
-from frenet_local_pathplanning.include.groundedSAM2 import GroundedSAM2
+# from frenet_local_pathplanning.include.groundedSAM2 import GroundedSAM2
 from frenet_local_pathplanning.include.waypointVisualizer import WaypointVisualizer
 from frenet_local_pathplanning.include.localization_converter import localization_converter
 
-MAX_SPEED = 1.3  # maximum speed [m/s]
+import matplotlib.pyplot as plt
+
+MAX_SPEED = 5.0  # maximum speed [m/s]
 MAX_ACCEL = 5.0  # maximum acceleration [m/ss]
-MAX_CURVATURE = 1.0  # maximum curvature [1/m]
+MAX_CURVATURE = 5.0  # maximum curvature [1/m]
 
 window_size = 5
 
@@ -71,6 +73,10 @@ class frenetLocalPathPlanner(Node):
             10
         )
 
+        # Path 퍼블리셔 추가 (global, local)
+        self.global_path_pub = self.create_publisher(Path, '/global_path', 10)
+        self.local_path_pub = self.create_publisher(Path, '/local_path', 10)
+
         # Publish: /cmd_vel
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -102,10 +108,10 @@ class frenetLocalPathPlanner(Node):
 
         self.localizationConverter = localization_converter()
 
-        self.SAM2 = GroundedSAM2()
+        # self.SAM2 = GroundedSAM2()
         self.cv_image = None
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-        self.latest_sam2_future = None
+        # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        # self.latest_sam2_future = None
 
         self.waypointVisualizer = WaypointVisualizer()
 
@@ -165,6 +171,9 @@ class frenetLocalPathPlanner(Node):
         self.tx, self.ty, self.tyaw, self.tk, self.rdk, self.ts, self.cubicSplineWay = fot.generate_target_course(waypointX, waypointY)
 
         self.get_logger().info(f"DrivingDistance : {self.cubicSplineWay.s[-1]}")
+
+        # global path를 RViz2에 퍼블리시 (tx, ty 좌표 사용)
+        self.publish_path(list(zip(self.tx, self.ty)), self.global_path_pub)
 
         
         self.is_navigating = True
@@ -235,6 +244,25 @@ class frenetLocalPathPlanner(Node):
     # -----------------------------
     # 콜백 & 기타 함수
     # -----------------------------
+
+    def publish_path(self, path_points, publisher, frame_id="map"):
+        """
+        주어진 (x, y) 좌표 리스트로 nav_msgs/Path 메시지를 생성하여 publisher로 발행합니다.
+        """
+        path_msg = Path()
+        path_msg.header.stamp = self.get_clock().now().to_msg()
+        path_msg.header.frame_id = frame_id
+        for (x, y) in path_points:
+            pose = PoseStamped()
+            pose.header = path_msg.header
+            pose.pose.position.x = x
+            pose.pose.position.y = y
+            pose.pose.position.z = 0.0
+            # 기본 orientation (회전 없음)
+            pose.pose.orientation.w = 1.0
+            path_msg.poses.append(pose)
+        publisher.publish(path_msg)
+        
     def pose_callback(self, msg):
         """
         /localization_2d_pose = Float64MultiArray(data=[x, y, yaw])
@@ -246,19 +274,20 @@ class frenetLocalPathPlanner(Node):
         self.current_pose.theta = localization_pose2D[2]+math.pi
 
         if self.is_navigating:
-            # 이전 SAM2 작업이 완료되었거나 없으면 새 작업 실행
-            if self.latest_sam2_future is None or self.latest_sam2_future.done():
-                self.latest_sam2_future = self.executor.submit(self.SAM2.image_callback, self.cv_image)
+            # # 이전 SAM2 작업이 완료되었거나 없으면 새 작업 실행
+            # if self.latest_sam2_future is None or self.latest_sam2_future.done():
+            #     self.latest_sam2_future = self.executor.submit(self.SAM2.image_callback, self.cv_image)
         
-            # SAM2 연산 결과가 준비되었으면 후속 처리 진행
-            if self.latest_sam2_future is not None and self.latest_sam2_future.done():
-                try:
-                    annotated_frame, ground_mask = self.latest_sam2_future.result()
-                    cv2.imshow("annotated_frame", annotated_frame)
-                    cv2.waitKey(1)
-                except Exception as e:
-                    self.get_logger().error(f"SAM2 processing failed: {e}")
-
+            # # SAM2 연산 결과가 준비되었으면 후속 처리 진행
+            # if self.latest_sam2_future is not None and self.latest_sam2_future.done():
+            #     try:
+            #         annotated_frame, ground_mask = self.latest_sam2_future.result()
+            #         cv2.imshow("annotated_frame", annotated_frame)
+            #         cv2.waitKey(1)
+            #     except Exception as e:
+            #         self.get_logger().error(f"SAM2 processing failed: {e}")
+            ground_mask = None
+            print("calculating frenet1!!")
             self.waypointVisualizer.localization_pose_callback(msg)
             
             s_coor, d_coor = self.convert_to_frenet(self.current_pose.x,
@@ -273,9 +302,16 @@ class frenetLocalPathPlanner(Node):
                                                     self.rdk,
                                                     self.ts,
                                                     self.cubicSplineWay)
+            print(s_coor[0], s_coor[1], s_coor[2], d_coor[0], d_coor[1], d_coor[2])
             [path, fpdict] = self.frenet_optimal_planning(
                 self.cubicSplineWay, s_coor[0], s_coor[1], s_coor[2], d_coor[0], d_coor[1], d_coor[2], ground_mask)
             self.localPP_waypoints = path
+            
+            print(len(fpdict["max_speed_error"]), len(fpdict["max_accel_error"]), len(fpdict["max_curvature_error"]), len(fpdict["collision_error"]), len(fpdict["ok"]))
+          
+            # local path를 RViz2에 퍼블리시 (best path의 x, y 좌표 사용)
+            if self.localPP_waypoints is not None:
+                self.publish_path(list(zip(self.localPP_waypoints.x, self.localPP_waypoints.y)), self.local_path_pub)
 
     def convert_to_frenet(self, x, y, theta, v, omega, cx, cy, cyaw, ck, cdk, cs, csp):
         """
@@ -351,15 +387,15 @@ class frenetLocalPathPlanner(Node):
             "ok": [],
         }
         for i, _ in enumerate(fplist):
-            if any([v > MAX_SPEED for v in fplist[i].v]):  # Max speed check
-                path_dict["max_speed_error"].append(fplist[i])
-            elif any([abs(a) > MAX_ACCEL for a in fplist[i].a]):  # Max accel check
-                path_dict["max_accel_error"].append(fplist[i])
-            elif any([abs(c) > MAX_CURVATURE for c in fplist[i].c]):  # Max curvature check
-                path_dict["max_curvature_error"].append(fplist[i])
-            elif not self.check_collision(fplist[i], ground_mask):
-                path_dict["collision_error"].append(fplist[i])
-            else:
+            # if any([v > MAX_SPEED for v in fplist[i].v]):  # Max speed check
+            #     path_dict["max_speed_error"].append(fplist[i])
+            # elif any([abs(a) > MAX_ACCEL for a in fplist[i].a]):  # Max accel check
+            #     path_dict["max_accel_error"].append(fplist[i])
+            # elif any([abs(c) > MAX_CURVATURE for c in fplist[i].c]):  # Max curvature check
+            #     path_dict["max_curvature_error"].append(fplist[i])
+            # # elif not self.check_collision(fplist[i], ground_mask):
+            # #     path_dict["collision_error"].append(fplist[i])
+            # else:
                 path_dict["ok"].append(fplist[i])
         return path_dict
     
@@ -419,6 +455,7 @@ class frenetLocalPathPlanner(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = frenetLocalPathPlanner()
+    # cv2.namedWindow("Debug Visualization", cv2.WINDOW_NORMAL)
 
     # 멀티스레드 Executor 생성
     # num_threads=2 이상으로 스레드 풀을 마련

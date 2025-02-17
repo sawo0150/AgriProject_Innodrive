@@ -6,9 +6,10 @@
 #custom constant
 
 Rtabmap_DetectionRate = '1.5'
-RGBD_MaxLoopClosureDistance = '0.10'
-rgbd_proximitymaxgraphdepth = '5'
-ProximityPathFilteringRadius = '0.10'
+RGBD_MaxLoopClosureDistance = '3'
+rgbd_proximitymaxgraphdepth = '50'
+ProximityPathFilteringRadius = '3'
+use_odom_gravity = 'false'
 
 
 import os
@@ -70,7 +71,8 @@ def launch_setup(context, *args, **kwargs):
         DeclareLaunchArgument('left_image_topic_relay',      default_value=ConditionalText(''.join([LaunchConfiguration('left_image_topic').perform(context), "_relay"]), ''.join(LaunchConfiguration('left_image_topic').perform(context)), LaunchConfiguration('compressed').perform(context)), description='Should not be modified manually!'),
         DeclareLaunchArgument('right_image_topic_relay',      default_value=ConditionalText(''.join([LaunchConfiguration('right_image_topic').perform(context), "_relay"]), ''.join(LaunchConfiguration('right_image_topic').perform(context)), LaunchConfiguration('compressed').perform(context)), description='Should not be modified manually!'),
         DeclareLaunchArgument('rgbd_topic_relay',      default_value=ConditionalText(''.join(LaunchConfiguration('rgbd_topic').perform(context)), ''.join([LaunchConfiguration('rgbd_topic').perform(context), "_relay"]), LaunchConfiguration('rgbd_sync').perform(context)), description='Should not be modified manually!'),
-    
+        DeclareLaunchArgument('use_odom_gravity',    default_value='false',    description='If true, enable Odom/UseIMUGravity so that IMU roll/pitch is used in odometry.'),
+
         SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
         # 'use_sim_time' will be set on all nodes following the line above
     
@@ -198,7 +200,8 @@ def launch_setup(context, *args, **kwargs):
                 "Rtabmap/DetectionRate": Rtabmap_DetectionRate,
                 "RGBD/MaxLoopClosureDistance": RGBD_MaxLoopClosureDistance,
                 "RGBD/ProximityPathFilteringRadius": ProximityPathFilteringRadius,
-                "RGBD/ProximityMaxGraphDepth": rgbd_proximitymaxgraphdepth
+                "RGBD/ProximityMaxGraphDepth": rgbd_proximitymaxgraphdepth,
+                "Mem/UseOdomGravity": use_odom_gravity
                 }],
             remappings=[
                 ("rgb/image", LaunchConfiguration('rgb_topic_relay')),
@@ -324,7 +327,8 @@ def launch_setup(context, *args, **kwargs):
                 "Mem/InitWMWithAllNodes": ConditionalText("true", "false", IfCondition(PythonExpression(["'", LaunchConfiguration('localization'), "' == 'true'"]))._predicate_func(context)).perform(context),
                 "Rtabmap/DetectionRate": Rtabmap_DetectionRate,
                 "RGBD/ProximityPathFilteringRadius": ProximityPathFilteringRadius,
-                "RGBD/ProximityMaxGraphDepth": rgbd_proximitymaxgraphdepth
+                "RGBD/ProximityMaxGraphDepth": rgbd_proximitymaxgraphdepth,
+                "Mem/UseOdomGravity": use_odom_gravity
                 }],
             
             remappings=[
@@ -376,7 +380,8 @@ def launch_setup(context, *args, **kwargs):
                 "qos_user_data": LaunchConfiguration('qos_user_data'),
                 "Rtabmap/DetectionRate": Rtabmap_DetectionRate,
                 "RGBD/ProximityPathFilteringRadius": ProximityPathFilteringRadius,
-                "RGBD/ProximityMaxGraphDepth": rgbd_proximitymaxgraphdepth
+                "RGBD/ProximityMaxGraphDepth": rgbd_proximitymaxgraphdepth,
+                "Mem/UseOdomGravity": use_odom_gravity
                 }],
             remappings=[
                 ("rgb/image", LaunchConfiguration('rgb_topic_relay')),
@@ -450,7 +455,7 @@ def generate_launch_description():
         DeclareLaunchArgument('odom_frame_id',  default_value='',                   description='If set, TF is used to get odometry instead of the topic.'),
         DeclareLaunchArgument('map_frame_id',   default_value='map',                description='Output map frame id (TF).'),
         DeclareLaunchArgument('map_topic',      default_value='map',                description='Map topic name.'),
-        DeclareLaunchArgument('publish_tf_map', default_value='true',               description='Publish TF between map and odomerty.'),
+        DeclareLaunchArgument('publish_tf_map', default_value='false',               description='Publish TF between map and odomerty.'),
         DeclareLaunchArgument('namespace',      default_value='rtabmap',            description=''),
         DeclareLaunchArgument('database_path',  default_value='~/.ros/rtabmap.db',  description='Where is the map saved/loaded.'),
         DeclareLaunchArgument('topic_queue_size', default_value='10',               description='Queue size of individual topic subscribers.'),
@@ -507,7 +512,7 @@ def generate_launch_description():
         DeclareLaunchArgument('icp_odometry',               default_value='false', description='Launch rtabmap icp odometry node.'),
         DeclareLaunchArgument('odom_topic',                 default_value='odom',  description='Odometry topic name.'),
         DeclareLaunchArgument('vo_frame_id',                default_value=LaunchConfiguration('odom_topic'), description='Visual/Icp odometry frame ID for TF.'),
-        DeclareLaunchArgument('publish_tf_odom',            default_value='true',  description=''),
+        DeclareLaunchArgument('publish_tf_odom',            default_value='false',  description=''),
         DeclareLaunchArgument('odom_tf_angular_variance',   default_value='0.01',    description='If TF is used to get odometry, this is the default angular variance'),
         DeclareLaunchArgument('odom_tf_linear_variance',    default_value='0.001',   description='If TF is used to get odometry, this is the default linear variance'),
         DeclareLaunchArgument('odom_args',                  default_value='',      description='More arguments for odometry (overwrite same parameters in rtabmap_args).'),

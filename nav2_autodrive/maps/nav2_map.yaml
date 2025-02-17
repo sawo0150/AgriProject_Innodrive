@@ -1,0 +1,6 @@
+image: nav2_map.png
+resolution: 0.1
+origin: [-40.99994847715734, -17.561347826903, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

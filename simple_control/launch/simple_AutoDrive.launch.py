@@ -24,14 +24,18 @@ def generate_launch_description():
                 'rgb_topic:=/sim_camera/rgb',
                 'depth_topic:=/sim_camera/depth',
                 'camera_info_topic:=/sim_camera/camera_info',
-                'frame_id:=RSD455',
+                # 'imu_topic:=/sim_camera/sim_imu',
+                'frame_id:=RSD455_align',
+                # 'odom_frame_id:=rtabmap_odom',
+                # 'map_frame_id:=rtabmap_map',
                 'approx_sync:=true',
                 'wait_imu_to_init:=false',
                 'qos:=1',
                 'Rtabmap_DetectionRate:=3.0',
                 'RGBD_MaxLoopClosureDistance:=2.0',
-                'RGBD_ProximityMaxGraphDepth:=5'
-                # 'rviz:=true'
+                'RGBD_ProximityMaxGraphDepth:=5',
+                # 'rviz:=true',
+                'use_sim_time:=true',
             ],
             output='screen'
         )

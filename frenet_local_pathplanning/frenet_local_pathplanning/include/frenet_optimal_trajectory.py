@@ -50,7 +50,7 @@ LONGITUDINAL_MOVEMENT = LongitudinalMovement.VELOCITY_KEEPING
 MAX_SPEED = 50.0 / 3.6  # maximum speed [m/s]
 MAX_ACCEL = 5.0  # maximum acceleration [m/ss]
 MAX_CURVATURE = 1.0  # maximum curvature [1/m]
-DT = 0.25  # time tick [s]
+DT = 1.0  # time tick [s]
 MAX_T = 5.0  # max prediction time [m]
 MIN_T = 4.0  # min prediction time [m]
 N_S_SAMPLE = 1  # sampling number of target speed
@@ -80,7 +80,7 @@ if LATERAL_MOVEMENT == LateralMovement.LOW_SPEED:
     ROBOT_RADIUS = 0.5  # robot radius [m]
 
     # Initial state parameters
-    INITIAL_SPEED = 1.0 / 3.6  # current speed [m/s]
+    INITIAL_SPEED = 0.0  # current speed [m/s]
     INITIAL_ACCEL = 0.0  # current acceleration [m/ss]
     INITIAL_LAT_POSITION = 0.5  # current lateral position [m]
     INITIAL_LAT_SPEED = 0.0  # current lateral speed [m/s]
